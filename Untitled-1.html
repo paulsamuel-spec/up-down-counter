@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4-Bit Sync Up/Down Counter</title>
+<style>
+body{font-family:Arial;background:#0f172a;color:white;margin:0;padding:15px}
+.container{max-width:900px;margin:auto;background:#1e293b;padding:20px;border-radius:16px}
+h1{text-align:center;color:#38bdf8;margin:0}
+.sub{text-align:center;color:#94a3b8;margin-bottom:20px}
+.controls{display:flex;gap:15px;flex-wrap:wrap;background:#0f172a;padding:15px;border-radius:12px;margin-bottom:20px}
+.cg{flex:1;min-width:180px;text-align:center}
+button{padding:12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;margin-top:8px;background:#38bdf8}
+button.reset{background:#f43f5e;color:white}
+.status{margin-top:10px;padding:8px;border-radius:6px;font-weight:bold}
+.up{color:#22c55e;background:#22c55e22}
+.down{color:#f59e0b;background:#f59e0b22}
+.bits{display:flex;justify-content:center;gap:20px;margin:15px 0}
+.led{width:65px;height:65px;background:#334155;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold}
+.led.on{background:#38bdf8;color:#000;box-shadow:0 0 15px #38bdf8}
+.values{display:flex;justify-content:center;gap:25px;font-size:18px;margin-bottom:15px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #334155;padding:8px;text-align:center}
+th{background:#38bdf8;color:#000}
+.box{background:#0f172a;padding:15px;border-radius:12px;max-height:220px;overflow-y:auto}
+.switch{position:relative;display:inline-block;width:50px;height:24px;margin:0 8px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;top:0;left:0;right:0;bottom:0;background:#334155;border-radius:24px;transition:.3s}
+.slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked + .slider{background:#f59e0b}
+input:checked + .slider:before{transform:translateX(26px)}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>4-BIT SYNCHRONOUS UP/DOWN COUNTER</h1>
+<p class="sub">Direction Control: M=0 UP | M=1 DOWN</p>
+
+<div class="controls">
+<div class="cg"><label>CLOCK</label><button id="clk">PULSE CLK ⏩</button><br><br><label><input type="checkbox" id="auto"> Auto Clock (1Hz)</label></div>
+<div class="cg"><label>DIRECTION (M)</label><div style="margin-top:10px"><span>UP 0</span><label class="switch"><input type="checkbox" id="dir"><span class="slider"></span></label><span>1 DOWN</span></div><div id="st" class="status up">Mode: UP COUNTING</div></div>
+<div class="cg"><label>RESET</label><button id="rst" class="reset">RESET (0000)</button></div>
+</div>
+
+<div class="box" style="text-align:center">
+<div class="bits">
+<div><div id="q3" class="led">0</div><small>Q3 MSB</small></div>
+<div><div id="q2" class="led">0</div><small>Q2</small></div>
+<div><div id="q1" class="led">0</div><small>Q1</small></div>
+<div><div id="q0" class="led">0</div><small>Q0 LSB</small></div>
+</div>
+<div class="values">
+<div>BIN: <b id="bin">0000</b></div>
+<div>DEC: <b id="dec">0</b></div>
+<div>HEX: <b id="hex">0x0</b></div>
+</div>
+</div>
+
+<div class="box" style="margin-top:15px">
+<h3>Sequence Table</h3>
+<table id="tab"><tr><th>Pulse</th><th>Q3 Q2 Q1 Q0</th><th>DEC</th></tr></table>
+</div>
+</div>
+
+<script>
+let count=0,pulse=0,dir=document.getElementById("dir"),st=document.getElementById("st"),auto=document.getElementById("auto"),iv=null;
+function upd(){
+let bin=count.toString(2).padStart(4,'0');
+document.getElementById("bin").innerText=bin;
+document.getElementById("dec").innerText=count;
+document.getElementById("hex").innerText="0x"+count.toString(16).toUpperCase();
+["q3","q2","q1","q0"].forEach((id,i)=>{
+let el=document.getElementById(id);
+el.innerText=bin[i];
+bin[i]=="1"?el.classList.add("on"):el.classList.remove("on");
+});
+}
+function clkPulse(){
+dir.checked?count=(count-1+16)%16:count=(count+1)%16;
+pulse++;upd();
+let bin=count.toString(2).padStart(4,'0').split('').join(' ');
+document.getElementById("tab").innerHTML+=`<tr><td>${pulse}</td><td>${bin}</td><td>${count}</td></tr>`;
+}
+dir.addEventListener("change",()=>{if(dir.checked){st.innerText="Mode: DOWN COUNTING";st.className="status down"}else{st.innerText="Mode: UP COUNTING";st.className="status up"}});
+document.getElementById("clk").onclick=clkPulse;
+document.getElementById("rst").onclick=()=>{count=0;pulse=0;document.getElementById("tab").innerHTML="<tr><th>Pulse</th><th>Q3 Q2 Q1 Q0</th><th>DEC</th></tr>";upd()};
+auto.addEventListener("change",()=>{if(auto.checked)iv=setInterval(clkPulse,1000);else clearInterval(iv)});
+upd();
+</script>
+</body>
+</html>
